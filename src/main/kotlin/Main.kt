@@ -5,6 +5,7 @@ import kotlinx.coroutines.runBlocking
 import org.openapitools.client.apis.AnimeApi
 import org.openapitools.client.apis.MangaApi
 import org.openapitools.client.apis.SeasonsApi
+import org.openapitools.client.apis.SeasonsApi.FilterGetSeason
 import org.openapitools.client.infrastructure.ApiClient
 import org.openapitools.client.models.Anime
 
@@ -16,7 +17,7 @@ const val delayTime = 1000L
 
 fun main() {
     runBlocking {
-        getAllSeasonalAnime(2025, "summer")
+        getAllSeasonalAnime(2022, "fall")
             .mapNotNull { anime ->
                 anime.malId?.let { malId ->
                     println("Fetching relations for animeId: $malId")
@@ -24,11 +25,18 @@ fun main() {
                 }?.data
                     ?.filter { it.relation?.lowercase() == "adaptation" }
                     ?.flatMap { it.entry.orEmpty() }
-                    ?.firstNotNullOfOrNull { sourceMaterial -> sourceMaterial.malId.takeIf { sourceMaterial.type == "manga" } }
-                    ?.let { sourceMaterialId ->
+                    ?.filter { sourceMaterial -> sourceMaterial.type == "manga" }
+                    ?.ifEmpty {
+                        println("No valid adaptation found for ${anime.malId}")
+                        null
+                    }
+                    ?.mapNotNull { sourceMaterial -> sourceMaterial.malId }
+                    ?.map { sourceMaterialIds ->
                         println("Fetching manga for: ${anime.malId}")
-                        mangaApi.getMangaById(sourceMaterialId).also { delay(delayTime) }.data
-                    }?.let { manga ->
+                        mangaApi.getMangaById(sourceMaterialIds).also { delay(delayTime) }.data
+                    }
+                    ?.maxByOrNull { manga -> manga?.score ?: 0f }
+                    ?.let { manga ->
                         AnimeByAdaptationRating(
                             animeTitle = anime.title,
                             sourceMaterialRating = manga.score
@@ -38,7 +46,7 @@ fun main() {
     }.let { result ->
         result.sortedByDescending { it.sourceMaterialRating }
     }.forEach {
-        println("${it.animeTitle}:   ${it.sourceMaterialRating}")
+        println("${it.animeTitle}:   ${it.sourceMaterialRating ?: "N/A"}")
     }
 }
 
@@ -53,7 +61,8 @@ suspend fun getAllSeasonalAnime(year: Int, season: String): List<Anime> {
             year = year,
             season = season,
             page = currentPage,
-            limit = 25
+            limit = 25,
+            filter = FilterGetSeason.TV
         ).also { response ->
             delay(delayTime)
             response.data?.let { allAnime.addAll(it) }

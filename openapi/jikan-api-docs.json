@@ -5150,7 +5150,8 @@
                             "ONA",
                             "Music",
                             "TV Special",
-                            "PV"
+                            "PV",
+                            "CM"
                         ],
                         "nullable": true
                     },
@@ -5455,7 +5456,8 @@
                             "ONA",
                             "Music",
                             "TV Special",
-                            "PV"
+                            "PV",
+                            "CM"
                         ],
                         "nullable": true
                     },
