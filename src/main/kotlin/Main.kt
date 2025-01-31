@@ -14,25 +14,32 @@ val animeApi = AnimeApi(apiClient.baseUrl, apiClient.client)
 val seasonApi = SeasonsApi(apiClient.baseUrl, apiClient.client)
 val mangaApi = MangaApi(apiClient.baseUrl, apiClient.client)
 const val delayTime = 1000L
+const val animeLogTemplate = "Anime Title: %s, Mal Id: %d"
 
 fun main() {
     runBlocking {
-        getAllSeasonalAnime(2022, "fall")
+        getAllSeasonalAnime(2025, "summer")
             .mapNotNull { anime ->
                 anime.malId?.let { malId ->
-                    println("Fetching relations for animeId: $malId")
+                    println("Fetching relations for " + String.format(animeLogTemplate, anime.title, anime.malId))
                     animeApi.getAnimeRelations(malId).also { delay(delayTime) }
                 }?.data
                     ?.filter { it.relation?.lowercase() == "adaptation" }
                     ?.flatMap { it.entry.orEmpty() }
                     ?.filter { sourceMaterial -> sourceMaterial.type == "manga" }
                     ?.ifEmpty {
-                        println("No valid adaptation found for ${anime.malId}")
+                        println(
+                            "No valid adaptation found for " + String.format(
+                                animeLogTemplate,
+                                anime.title,
+                                anime.malId
+                            )
+                        )
                         null
                     }
                     ?.mapNotNull { sourceMaterial -> sourceMaterial.malId }
                     ?.map { sourceMaterialIds ->
-                        println("Fetching manga for: ${anime.malId}")
+                        println("Fetching manga for " + String.format(animeLogTemplate, anime.title, anime.malId))
                         mangaApi.getMangaById(sourceMaterialIds).also { delay(delayTime) }.data
                     }
                     ?.maxByOrNull { manga -> manga?.score ?: 0f }
