@@ -16,9 +16,14 @@ val mangaApi = MangaApi(apiClient.baseUrl, apiClient.client)
 const val delayTime = 1000L
 const val animeLogTemplate = "Anime Title: %s, Mal Id: %d"
 
-fun main() {
+fun main(args: Array<String>) {
+    if (args.isEmpty()) {
+        println("Provide parameters: <year> <season>")
+        return
+    }
+
     runBlocking {
-        getAllSeasonalAnime(2025, "summer")
+        getAllSeasonalAnime(args[0].toInt(), args[1])
             .mapNotNull { anime ->
                 anime.malId?.let { malId ->
                     println("Fetching relations for " + String.format(animeLogTemplate, anime.title, anime.malId))
