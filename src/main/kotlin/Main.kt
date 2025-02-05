@@ -50,15 +50,20 @@ fun main(args: Array<String>) {
                     ?.maxByOrNull { manga -> manga?.score ?: 0f }
                     ?.let { manga ->
                         AnimeByAdaptationRating(
-                            animeTitle = anime.title,
-                            sourceMaterialRating = manga.score
+                            title = anime.title,
+                            sourceMaterialRating = manga.score,
+                            malUrl = anime.url
                         )
                     }
             }
     }.let { result ->
+        println("${args[0]} ${args[1]}")
+        println("--------------------")
         result.sortedByDescending { it.sourceMaterialRating }
     }.forEach {
-        println("${it.animeTitle}:   ${it.sourceMaterialRating ?: "N/A"}")
+        println("${it.title}:   ${it.sourceMaterialRating ?: "N/A"}")
+        println("${it.malUrl}")
+        println("")
     }
 }
 
@@ -88,6 +93,7 @@ suspend fun getAllSeasonalAnime(year: Int, season: String): List<Anime> {
 }
 
 data class AnimeByAdaptationRating(
-    val animeTitle: String?,
+    val title: String?,
+    val malUrl: String?,
     val sourceMaterialRating: Float?
 )
