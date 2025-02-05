@@ -2,6 +2,7 @@ package org.example
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import org.example.common.capitalizeFirstLetter
 import org.openapitools.client.apis.AnimeApi
 import org.openapitools.client.apis.MangaApi
 import org.openapitools.client.apis.SeasonsApi
@@ -57,7 +58,8 @@ fun main(args: Array<String>) {
                     }
             }
     }.let { result ->
-        println("${args[0]} ${args[1]}")
+        println("")
+        println("${args[0]} ${args[1].capitalizeFirstLetter()}")
         println("--------------------")
         result.sortedByDescending { it.sourceMaterialRating }
     }.forEach {
