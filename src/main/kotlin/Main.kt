@@ -9,6 +9,7 @@ import org.openapitools.client.apis.SeasonsApi
 import org.openapitools.client.apis.SeasonsApi.FilterGetSeason
 import org.openapitools.client.infrastructure.ApiClient
 import org.openapitools.client.models.Anime
+import org.openapitools.client.models.Manga
 
 val apiClient = ApiClient("https://api.jikan.moe/v4")
 val animeApi = AnimeApi(apiClient.baseUrl, apiClient.client)
@@ -44,11 +45,16 @@ fun main(args: Array<String>) {
                         null
                     }
                     ?.mapNotNull { sourceMaterial -> sourceMaterial.malId }
-                    ?.map { sourceMaterialIds ->
+                    ?.mapNotNull { sourceMaterialIds ->
                         println("Fetching manga for " + String.format(animeLogTemplate, anime.title, anime.malId))
                         mangaApi.getMangaById(sourceMaterialIds).also { delay(delayTime) }.data
                     }
-                    ?.maxByOrNull { manga -> manga?.score ?: 0f }
+                    ?.let { adaptationList ->
+                        adaptationList
+                            .filter { it.type == Manga.Type.MANGA }
+                            .maxByOrNull { it.score ?: 0f }
+                            ?: adaptationList.maxByOrNull { it.score ?: 0f }
+                    }
                     ?.let { manga ->
                         AnimeByAdaptationRating(
                             title = anime.title,
