@@ -1,5 +1,10 @@
 package org.example
 
+import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.main
+import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.types.enum
+import com.github.ajalt.clikt.parameters.types.int
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.example.common.capitalizeFirstLetter
@@ -19,13 +24,12 @@ const val delayTime = 1000L
 const val animeLogTemplate = "Anime Title: %s, Mal Id: %d"
 
 fun main(args: Array<String>) {
-    if (args.isEmpty()) {
-        println("Provide parameters: <year> <season>")
-        return
-    }
+    Params().main(args)
+}
 
+fun start(year: Int, season: String) {
     runBlocking {
-        getAllSeasonalAnime(args[0].toInt(), args[1])
+        getAllSeasonalAnime(year, season)
             .mapNotNull { anime ->
                 anime.malId?.let { malId ->
                     println("Fetching relations for " + String.format(animeLogTemplate, anime.title, anime.malId))
@@ -65,7 +69,7 @@ fun main(args: Array<String>) {
             }
     }.let { result ->
         println("")
-        println("${args[0]} ${args[1].capitalizeFirstLetter()}")
+        println("$year ${season.capitalizeFirstLetter()}")
         println("--------------------")
         result.sortedByDescending { it.sourceMaterialRating }
     }.forEach {
@@ -105,3 +109,13 @@ data class AnimeByAdaptationRating(
     val malUrl: String?,
     val sourceMaterialRating: Float?
 )
+
+enum class SEASON { WINTER, SPRING, SUMMER, FALL }
+
+class Params : CliktCommand() {
+    private val year by argument().int()
+    private val season by argument().enum<SEASON>()
+    override fun run() {
+        start(year, season.name)
+    }
+}
