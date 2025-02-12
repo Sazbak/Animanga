@@ -3,6 +3,8 @@ package org.example
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.main
 import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.options.flag
+import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.int
 import kotlinx.coroutines.delay
@@ -27,7 +29,7 @@ fun main(args: Array<String>) {
     Params().main(args)
 }
 
-fun start(year: Int, season: String) {
+fun start(year: Int, season: String, hasNoPrequel: Boolean) {
     runBlocking {
         getAllSeasonalAnime(year, season)
             .mapNotNull { anime ->
@@ -35,6 +37,7 @@ fun start(year: Int, season: String) {
                     println("Fetching relations for " + String.format(animeLogTemplate, anime.title, anime.malId))
                     animeApi.getAnimeRelations(malId).also { delay(delayTime) }
                 }?.data
+                    ?.takeUnless { relations -> hasNoPrequel && relations.any { it.relation?.lowercase() == "prequel" } }
                     ?.filter { it.relation?.lowercase() == "adaptation" }
                     ?.flatMap { it.entry.orEmpty() }
                     ?.filter { sourceMaterial -> sourceMaterial.type == "manga" }
@@ -115,7 +118,9 @@ enum class SEASON { WINTER, SPRING, SUMMER, FALL }
 class Params : CliktCommand() {
     private val year by argument().int()
     private val season by argument().enum<SEASON>()
+    private val hasNoPrequel by option("-hnp", "--has-no-prequel").flag()
+
     override fun run() {
-        start(year, season.name)
+        start(year = year, season = season.name, hasNoPrequel = hasNoPrequel)
     }
 }
