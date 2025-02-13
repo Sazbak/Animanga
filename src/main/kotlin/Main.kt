@@ -29,7 +29,7 @@ fun main(args: Array<String>) {
     Params().main(args)
 }
 
-fun start(year: Int, season: String, hasNoPrequel: Boolean) {
+fun start(year: Int, season: String, hasNoPrequel: Boolean, hasNoSequel: Boolean) {
     runBlocking {
         getAllSeasonalAnime(year, season)
             .mapNotNull { anime ->
@@ -38,6 +38,7 @@ fun start(year: Int, season: String, hasNoPrequel: Boolean) {
                     animeApi.getAnimeRelations(malId).also { delay(delayTime) }
                 }?.data
                     ?.takeUnless { relations -> hasNoPrequel && relations.any { it.relation?.lowercase() == "prequel" } }
+                    ?.takeUnless { relations -> hasNoSequel && relations.any { it.relation?.lowercase() == "sequel" } }
                     ?.filter { it.relation?.lowercase() == "adaptation" }
                     ?.flatMap { it.entry.orEmpty() }
                     ?.filter { sourceMaterial -> sourceMaterial.type == "manga" }
@@ -119,8 +120,9 @@ class Params : CliktCommand() {
     private val year by argument().int()
     private val season by argument().enum<SEASON>()
     private val hasNoPrequel by option("-hnp", "--has-no-prequel").flag()
+    private val hasNoSequel by option("-hns", "--has-no-sequel").flag()
 
     override fun run() {
-        start(year = year, season = season.name, hasNoPrequel = hasNoPrequel)
+        start(year = year, season = season.name, hasNoPrequel = hasNoPrequel, hasNoSequel = hasNoSequel)
     }
 }
