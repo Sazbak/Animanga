@@ -13,7 +13,6 @@ import org.example.common.capitalizeFirstLetter
 import org.openapitools.client.apis.AnimeApi
 import org.openapitools.client.apis.MangaApi
 import org.openapitools.client.apis.SeasonsApi
-import org.openapitools.client.apis.SeasonsApi.FilterGetSeason
 import org.openapitools.client.infrastructure.ApiClient
 import org.openapitools.client.models.Anime
 import org.openapitools.client.models.Manga
@@ -95,7 +94,7 @@ suspend fun getAllSeasonalAnime(year: Int, season: String): List<Anime> {
             season = season,
             page = currentPage,
             limit = 25,
-            filter = FilterGetSeason.TV
+            filter = SeasonsApi.FilterGetSeason.TV
         ).also { response ->
             delay(delayTime)
             response.data?.let { allAnime.addAll(it) }
